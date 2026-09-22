@@ -8,7 +8,7 @@
   <meta name="rules-bot-turnstile-site-key" content="0x4AAAAAAFAJtiya_cczPYNt">
   <title>5.5e Rules Bot | Krakenworks</title>
   <link rel="stylesheet" href="../styles.css">
-  <script src="app.js" defer></script>
+  <script src="app.js" type="module"></script>
 </head>
 <body>
   <header class="site-header">
@@ -25,7 +25,7 @@
       <div>
         <p class="eyebrow">D&amp;D 2024 / 5.5e · Citation-first</p>
         <h1>Rules,<br><span>with receipts.</span></h1>
-        <p class="lead">Ask what happens at the table. The Rules Bot looks for the relevant rule, answers briefly, and shows its sources—or tells you when it cannot establish a reliable ruling.</p>
+        <p class="lead">Ask what happens at the table. The Rules Bot returns the complete authorized rule text—or asks you to choose when more than one rule could match.</p>
         <p class="status-line" id="service-status"><span class="status-dot offline"></span>Public beta API not connected</p>
       </div>
       <aside class="feature-panel">
@@ -33,9 +33,9 @@
         <h2>Useful, not omniscient.</h2>
         <ul class="feature-list">
           <li>5.5e / 2024 rules are the default</li>
-          <li>Citations travel with the answer</li>
+          <li>Complete SRD rules, without truncation</li>
           <li>Missing context becomes a question, not a guess</li>
-          <li>Your DM still has the final call</li>
+          <li>No AI opinion or invented adjudication</li>
         </ul>
       </aside>
     </section>
@@ -66,7 +66,7 @@
 
         <section class="answer-panel" id="answer-panel" aria-live="polite" hidden>
           <p class="answer-kicker" id="answer-kind">Answer</p>
-          <p class="answer-text" id="answer-text"></p>
+          <div class="answer-text" id="answer-text"></div>
           <div id="citations-wrap" hidden>
             <h2>Sources</h2>
             <ol class="citation-list" id="citation-list"></ol>

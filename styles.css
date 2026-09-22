@@ -390,6 +390,43 @@ textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgb(239 168 
 .answer-panel[hidden] { display: none; }
 .answer-kicker { color: var(--green); font-size: .75rem; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
 .answer-text { font-size: 1.08rem; white-space: pre-wrap; }
+.answer-text.rule-results { display: grid; gap: 1rem; white-space: normal; }
+.rule-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgb(7 16 14 / 55%);
+}
+.rule-card h2 {
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid var(--line);
+  background: rgb(23 49 40 / 58%);
+  font: 750 1.35rem/1.2 Georgia, serif;
+  letter-spacing: -.02em;
+}
+.rule-body { padding: .35rem 1.15rem .7rem; }
+.rule-body h3 { margin: 1rem 0 .45rem; font: 800 1rem/1.3 system-ui, sans-serif; letter-spacing: 0; }
+.rule-body p { margin: .75rem 0; }
+.rule-body ul { margin: .65rem 0 .9rem; padding-left: 1.3rem; }
+.rule-body li + li { margin-top: .25rem; }
+.rule-body code { padding: .08em .3em; border-radius: 4px; background: var(--panel-light); }
+.rule-source {
+  margin: 0;
+  padding: .7rem 1.15rem;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+  font-size: .78rem;
+}
+.rule-provenance {
+  padding: .75rem 1rem;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: .78rem;
+}
+.rule-provenance summary { color: var(--text); font-weight: 750; cursor: pointer; }
+.rule-provenance div { margin-top: .65rem; overflow-wrap: anywhere; }
+.rule-provenance p { margin: .35rem 0; }
 .citation-list { display: grid; gap: .7rem; padding: 0; list-style: none; }
 .citation-list li {
   padding: .8rem 1rem;

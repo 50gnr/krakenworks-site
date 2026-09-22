@@ -1,3 +1,5 @@
+import {parseRuleEnvelope} from "./rule-envelope.mjs";
+
 const form = document.querySelector("#rules-form");
 const question = document.querySelector("#question");
 const count = document.querySelector("#character-count");
@@ -27,10 +29,107 @@ function setStatus(message, online = false) {
   serviceStatus.append(dot, document.createTextNode(message));
 }
 
+function appendInlineRuleText(target, text) {
+  const token = /(_\*\*[^*]+\*\*_|\*\*[^*]+\*\*|_[^_]+_|`[^`]+`)/g;
+  let cursor = 0;
+  for (const match of text.matchAll(token)) {
+    target.append(document.createTextNode(text.slice(cursor, match.index)));
+    const value = match[0];
+    const nestedStrong = value.startsWith("_**");
+    const element = document.createElement(value.startsWith("**") ? "strong" : value.startsWith("_") ? "em" : "code");
+    if (nestedStrong) {
+      const strong = document.createElement("strong");
+      strong.textContent = value.slice(3, -3);
+      element.append(strong);
+    } else element.textContent = value.startsWith("**") ? value.slice(2, -2) : value.slice(1, -1);
+    target.append(element);
+    cursor = match.index + value.length;
+  }
+  target.append(document.createTextNode(text.slice(cursor)));
+}
+
+function renderRuleMarkdown(target, markdown) {
+  let paragraph = [];
+  let list = null;
+  const flushParagraph = () => {
+    if (!paragraph.length) return;
+    const element = document.createElement("p");
+    appendInlineRuleText(element, paragraph.join(" "));
+    target.append(element);
+    paragraph = [];
+  };
+  const closeList = () => { list = null; };
+
+  for (const rawLine of markdown.split("\n")) {
+    const line = rawLine.trim();
+    if (!line) {
+      flushParagraph();
+      closeList();
+      continue;
+    }
+    const heading = line.match(/^(#{1,4})\s+(.+)$/);
+    if (heading) {
+      flushParagraph();
+      closeList();
+      const element = document.createElement("h3");
+      appendInlineRuleText(element, heading[2]);
+      target.append(element);
+      continue;
+    }
+    if (line.startsWith("- ")) {
+      flushParagraph();
+      if (!list) {
+        list = document.createElement("ul");
+        target.append(list);
+      }
+      const item = document.createElement("li");
+      appendInlineRuleText(item, line.slice(2));
+      list.append(item);
+      continue;
+    }
+    closeList();
+    paragraph.push(line);
+  }
+  flushParagraph();
+}
+
+function renderRuleEnvelope(envelope) {
+  answerText.replaceChildren();
+  answerText.classList.add("rule-results");
+  for (const entry of envelope.entries) {
+    const card = document.createElement("article");
+    card.className = "rule-card";
+    const title = document.createElement("h2");
+    title.textContent = entry.title;
+    const body = document.createElement("div");
+    body.className = "rule-body";
+    renderRuleMarkdown(body, entry.body);
+    const source = document.createElement("p");
+    source.className = "rule-source";
+    source.textContent = entry.source;
+    card.append(title, body, source);
+    answerText.append(card);
+  }
+  const details = document.createElement("details");
+  details.className = "rule-provenance";
+  const summary = document.createElement("summary");
+  summary.textContent = "Source, license, and attribution";
+  const content = document.createElement("div");
+  renderRuleMarkdown(content, envelope.provenance);
+  details.append(summary, content);
+  answerText.append(details);
+}
+
 function showAnswer(kind, text, citations = [], isError = false) {
   answerKind.textContent = kind;
   answerKind.classList.toggle("notice-error", isError);
-  answerText.textContent = text;
+  answerText.classList.remove("rule-results");
+  const envelope = !isError ? parseRuleEnvelope(text) : null;
+  if (envelope) renderRuleEnvelope(envelope);
+  else {
+    answerText.replaceChildren();
+    answerText.textContent = text;
+  }
   citationList.replaceChildren();
   for (const citation of citations) {
     const item = document.createElement("li");
@@ -41,7 +140,7 @@ function showAnswer(kind, text, citations = [], isError = false) {
     item.append(quote, source);
     citationList.append(item);
   }
-  citationsWrap.hidden = citations.length === 0;
+  citationsWrap.hidden = citations.length === 0 || Boolean(envelope);
   panel.hidden = false;
 }
 
@@ -111,7 +210,7 @@ form.addEventListener("submit", async event => {
     });
     if (!response.ok) throw new Error("request_failed");
     const result = await response.json();
-    const labels = {answer: "Answer", clarification: "One detail first", evidence: "Rules evidence", unresolved: "No reliable ruling"};
+    const labels = {answer: "Answer", clarification: "Choose a rule", evidence: "Rules as written", unresolved: "No reliable rule found"};
     showAnswer(labels[result.kind] || "Rules response", result.text || "The service returned no answer.", Array.isArray(result.citations) ? result.citations : []);
     if (result.responseId) {
       activeResponse = {id: result.responseId, consented};
