@@ -5,9 +5,9 @@ import fs from 'node:fs';
 const html = fs.readFileSync(new URL('./index.html', import.meta.url), 'utf8');
 const script = fs.readFileSync(new URL('./app.js', import.meta.url), 'utf8');
 
-test('production API endpoint remains blank', () => {
-  assert.match(html, /<meta name="rules-bot-api" content="">/);
-  assert.match(html, /<meta name="rules-bot-turnstile-site-key" content="">/);
+test('production uses the reviewed HTTPS API and Turnstile widget', () => {
+  assert.match(html, /<meta name="rules-bot-api" content="https:\/\/dungeon\.tail804ca5\.ts\.net\/v1\/ask">/);
+  assert.match(html, /<meta name="rules-bot-turnstile-site-key" content="0x4AAAAAAFAJtiya_cczPYNt">/);
 });
 test('question requests carry the fixed system and explicit telemetry consent', () => {
   assert.match(script, /system: "dnd-2024", telemetryConsent: consented, turnstileToken/);
