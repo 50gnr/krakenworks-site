@@ -3,23 +3,81 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Krakenworks is a personal project workshop for creative, technical, and practical experiments.">
-  <title>Krakenworks</title>
+  <meta name="description" content="Krakenworks makes curious games and practical tools, including Dungeon Inc. and the 5.5e Rules Bot.">
+  <title>Krakenworks — Games and useful oddities</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main class="card">
-    <p class="eyebrow">Personal project workshop</p>
-    <h1>Krakenworks</h1>
-    <p class="lead">A home for creative, technical, and practical projects—built carefully, tested properly, and occasionally held together by fox magic.</p>
-    <section>
-      <h2>Piper Mail</h2>
-      <p>Piper Mail is a private, owner-operated assistant integration used to organize approved Gmail and Google Workspace accounts. It is not offered as a public service.</p>
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="Krakenworks home">
+      <span class="brand-mark" aria-hidden="true">K</span>
+      <span>Krakenworks</span>
+    </a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="dungeons-inc/">Dungeon Inc.</a>
+      <a href="privacy/">Privacy</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="eyebrow">Small studio · strange machinery</p>
+      <h1>Games with teeth.<br><span>Tools with receipts.</span></h1>
+      <p class="lead">Krakenworks is a workshop for thoughtful games and practical experiments—built carefully, tested properly, and occasionally held together by fox magic.</p>
+      <div class="button-row">
+        <a class="button button-primary" href="dungeons-inc/">Play Dungeon Inc.</a>
+      </div>
     </section>
-    <nav aria-label="Site links">
-      <a href="privacy/">Privacy Policy</a>
+
+    <section class="project-grid" aria-labelledby="projects-title">
+      <div class="section-heading">
+        <p class="eyebrow">From the workshop</p>
+        <h2 id="projects-title">Pick your particular problem.</h2>
+      </div>
+
+      <article class="project-card project-dungeon">
+        <div class="project-art" aria-hidden="true">
+          <span class="pixel-door"></span>
+          <span class="torch torch-left"></span>
+          <span class="torch torch-right"></span>
+        </div>
+        <div class="project-copy">
+          <p class="tag">Android game · Early trial</p>
+          <h3>Dungeon Inc.</h3>
+          <p>Build the dungeon. Hire the monsters. Watch another heroic adventuring party discover that your floor plan has opinions.</p>
+          <a class="text-link" href="dungeons-inc/">Download the APK <span aria-hidden="true">→</span></a>
+        </div>
+      </article>
+
+      <article class="project-card project-rules" aria-label="Rules Bot, coming soon">
+        <div class="project-art rule-runes" aria-hidden="true">
+          <span>d20</span>
+          <i></i><i></i><i></i>
+        </div>
+        <div class="project-copy">
+          <p class="tag">D&amp;D 5.5e · Coming next</p>
+          <h3>Rules Bot</h3>
+          <p>Ask a plain-English rules question. Get a concise answer, the supporting citations, or an honest request for more context.</p>
+          <p class="status-line"><span class="status-dot offline"></span>Public beta in development</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="private-tool">
+      <div>
+        <p class="eyebrow">Behind the curtain</p>
+        <h2>Piper Mail</h2>
+      </div>
+      <p>A private, owner-operated assistant integration used to organize approved Gmail and Google Workspace accounts. It is not offered as a public service.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>© 2026 Krakenworks. Built in Saskatchewan, tested wherever the Wi-Fi reaches.</p>
+    <nav aria-label="Footer navigation">
+      <a href="privacy/">Privacy</a>
       <a href="mailto:admin@krakenworks.app">Contact</a>
     </nav>
-  </main>
+  </footer>
 </body>
 </html>
