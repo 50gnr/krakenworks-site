@@ -13,8 +13,12 @@ const feedbackWrap = document.querySelector("#feedback-wrap");
 const feedbackButton = document.querySelector("#report-answer");
 const feedbackStatus = document.querySelector("#feedback-status");
 const apiEndpoint = document.querySelector('meta[name="rules-bot-api"]')?.content.trim();
+const turnstileSiteKey = document.querySelector('meta[name="rules-bot-turnstile-site-key"]')?.content.trim();
+const turnstileWrap = document.querySelector("#turnstile-wrap");
 
 let activeResponse = null;
+let turnstileToken = "";
+let turnstileWidgetId = null;
 
 function setStatus(message, online = false) {
   serviceStatus.replaceChildren();
@@ -61,6 +65,22 @@ for (const example of document.querySelectorAll(".example-list .example-button")
   });
 }
 if (apiEndpoint) setStatus("Live beta API connected", true);
+if (turnstileSiteKey) {
+  turnstileWrap.hidden = false;
+  window.rulesBotTurnstileReady = () => {
+    turnstileWidgetId = window.turnstile.render("#turnstile-widget", {
+      sitekey: turnstileSiteKey,
+      callback: token => { turnstileToken = token; },
+      "expired-callback": () => { turnstileToken = ""; },
+      "error-callback": () => { turnstileToken = ""; },
+    });
+  };
+  const script = document.createElement("script");
+  script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?onload=rulesBotTurnstileReady&render=explicit";
+  script.async = true;
+  script.defer = true;
+  document.head.append(script);
+}
 
 form.addEventListener("submit", async event => {
   event.preventDefault();
@@ -74,6 +94,10 @@ form.addEventListener("submit", async event => {
     showAnswer("Beta not connected", "The question interface is ready, but the rules service endpoint is intentionally blank. Connect a reviewed local or HTTPS API before using the live beta.", [], true);
     return;
   }
+  if (turnstileSiteKey && !turnstileToken) {
+    showAnswer("Bot check required", "Complete the anti-bot check, then ask again.", [], true);
+    return;
+  }
 
   button.disabled = true;
   button.textContent = "Checking the rules…";
@@ -83,7 +107,7 @@ form.addEventListener("submit", async event => {
     const response = await fetch(apiEndpoint, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({question: value, system: "dnd-2024", telemetryConsent: consented})
+      body: JSON.stringify({question: value, system: "dnd-2024", telemetryConsent: consented, turnstileToken})
     });
     if (!response.ok) throw new Error("request_failed");
     const result = await response.json();
@@ -98,6 +122,8 @@ form.addEventListener("submit", async event => {
   } catch {
     showAnswer("Service unavailable", "The Rules Bot could not answer right now. Nothing has been submitted again automatically; please try later.", [], true);
   } finally {
+    turnstileToken = "";
+    if (turnstileSiteKey && turnstileWidgetId !== null) window.turnstile?.reset(turnstileWidgetId);
     button.disabled = false;
     button.textContent = "Ask the bot";
   }

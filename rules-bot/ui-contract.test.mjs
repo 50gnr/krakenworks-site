@@ -7,10 +7,17 @@ const script = fs.readFileSync(new URL('./app.js', import.meta.url), 'utf8');
 
 test('production API endpoint remains blank', () => {
   assert.match(html, /<meta name="rules-bot-api" content="">/);
+  assert.match(html, /<meta name="rules-bot-turnstile-site-key" content="">/);
 });
 test('question requests carry the fixed system and explicit telemetry consent', () => {
-  assert.match(script, /system: "dnd-2024", telemetryConsent: consented/);
+  assert.match(script, /system: "dnd-2024", telemetryConsent: consented, turnstileToken/);
   assert.match(html, /id="telemetry-consent"/);
+});
+test('public questions require a fresh Cloudflare Turnstile token', () => {
+  assert.match(script, /challenges\.cloudflare\.com\/turnstile\/v0\/api\.js/);
+  assert.match(script, /if \(turnstileSiteKey && !turnstileToken\)/);
+  assert.match(script, /turnstile\?\.reset\(turnstileWidgetId\)/);
+  assert.match(html, /id="turnstile-widget"/);
 });
 test('bad-answer reporting is tied to response ID without free-text collection', () => {
   assert.match(script, /responseId: activeResponse\.id, feedback: "bad-answer"/);

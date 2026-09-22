@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Ask the Krakenworks Rules Bot a D&D 5.5e rules question and get a source-grounded answer.">
   <meta name="rules-bot-api" content="">
+  <meta name="rules-bot-turnstile-site-key" content="">
   <title>5.5e Rules Bot | Krakenworks</title>
   <link rel="stylesheet" href="../styles.css">
   <script src="app.js" defer></script>
@@ -53,6 +54,10 @@
             <button class="example-button" type="button">Can I hide while an enemy can see me?</button>
           </div>
           <label class="telemetry-choice" for="telemetry-consent"><input id="telemetry-consent" type="checkbox"> Share this question and minimal response metadata for QA. No name, IP, or citation text is logged.</label>
+          <div class="turnstile-wrap" id="turnstile-wrap" hidden>
+            <div id="turnstile-widget" aria-label="Anti-bot verification"></div>
+            <p class="form-hint">Complete the privacy-preserving anti-bot check before asking.</p>
+          </div>
           <div class="form-actions">
             <span class="form-hint">Do not include private information or copyrighted book text.</span>
             <button class="button button-primary" id="ask-button" type="submit">Ask the bot</button>

@@ -27,8 +27,14 @@ The static interface is now present under `rules-bot/`. To connect it, set the
 `rules-bot-api` meta tag in `rules-bot/index.html` to the final HTTPS endpoint.
 For local-only testing, serve this repository with `python3 -m http.server 8080 --bind 127.0.0.1`, start the Rules Lawyer adapter with `npm run serve:beta`, and temporarily set the meta value to `http://127.0.0.1:8787/v1/ask`. Never commit that local URL as a production endpoint.
 
-The browser sends `POST { "question": string, "system": "dnd-2024", "telemetryConsent": boolean }` and expects
+The browser sends `POST { "question": string, "system": "dnd-2024", "telemetryConsent": boolean, "turnstileToken": string }` and expects
 `{ "kind": "answer" | "clarification" | "evidence" | "unresolved",
 "text": string, "citations": [{ "quote": string, "source": string }] }`.
 Keep the endpoint blank until authentication/CORS, abuse limits, privacy-minimal
 logging, an operator kill switch, and the Rules Lawyer release gates are complete. Consent is off by default. A consented response can be reported through the derived `/v1/feedback` endpoint using its response ID; the UI collects no free-text feedback or identity.
+
+For public launch, also set the `rules-bot-turnstile-site-key` meta value. The
+public site key may be committed; the matching Turnstile secret must exist only
+in the local API process environment. The API remains bound to loopback behind
+Cloudflare Tunnel and enforces exact-origin, Turnstile, per-client, global, and
+daily limits.
