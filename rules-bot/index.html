@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Ask the Krakenworks Rules Bot a D&D 5.5e rules question and get a source-grounded answer.">
+  <meta name="rules-bot-api" content="">
+  <title>5.5e Rules Bot | Krakenworks</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="../" aria-label="Krakenworks home"><span class="brand-mark" aria-hidden="true">K</span><span>Krakenworks</span></a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="../dungeons-inc/">Dungeon Inc.</a>
+      <a href="./" aria-current="page">Rules Bot</a>
+      <a href="../privacy/">Privacy</a>
+    </nav>
+  </header>
+
+  <main class="page-main">
+    <section class="page-hero">
+      <div>
+        <p class="eyebrow">D&amp;D 2024 / 5.5e · Citation-first</p>
+        <h1>Rules,<br><span>with receipts.</span></h1>
+        <p class="lead">Ask what happens at the table. The Rules Bot looks for the relevant rule, answers briefly, and shows its sources—or tells you when it cannot establish a reliable ruling.</p>
+        <p class="status-line" id="service-status"><span class="status-dot offline"></span>Public beta API not connected</p>
+      </div>
+      <aside class="feature-panel">
+        <p class="eyebrow">What it promises</p>
+        <h2>Useful, not omniscient.</h2>
+        <ul class="feature-list">
+          <li>5.5e / 2024 rules are the default</li>
+          <li>Citations travel with the answer</li>
+          <li>Missing context becomes a question, not a guess</li>
+          <li>Your DM still has the final call</li>
+        </ul>
+      </aside>
+    </section>
+
+    <section class="bot-layout" aria-labelledby="ask-title">
+      <div class="bot-panel">
+        <form class="bot-form" id="rules-form">
+          <label id="ask-title" for="question">What happened at your table?</label>
+          <div class="question-wrap">
+            <textarea id="question" name="question" maxlength="600" required placeholder="Can I cast a spell with a somatic component while holding a sword and shield?"></textarea>
+            <span class="character-count"><span id="character-count">0</span>/600</span>
+          </div>
+          <div class="example-list" aria-label="Example questions">
+            <button class="example-button" type="button">When do I get my reaction back?</button>
+            <button class="example-button" type="button">Does a natural 20 always pass an ability check?</button>
+            <button class="example-button" type="button">Can I hide while an enemy can see me?</button>
+          </div>
+          <label class="telemetry-choice" for="telemetry-consent"><input id="telemetry-consent" type="checkbox"> Share this question and minimal response metadata for QA. No name, IP, or citation text is logged.</label>
+          <div class="form-actions">
+            <span class="form-hint">Do not include private information or copyrighted book text.</span>
+            <button class="button button-primary" id="ask-button" type="submit">Ask the bot</button>
+          </div>
+        </form>
+
+        <section class="answer-panel" id="answer-panel" aria-live="polite" hidden>
+          <p class="answer-kicker" id="answer-kind">Answer</p>
+          <p class="answer-text" id="answer-text"></p>
+          <div id="citations-wrap" hidden>
+            <h2>Sources</h2>
+            <ol class="citation-list" id="citation-list"></ol>
+          </div>
+          <div class="feedback-wrap" id="feedback-wrap" hidden>
+            <button class="example-button" id="report-answer" type="button">Report a bad answer</button>
+            <span id="feedback-status" role="status"></span>
+          </div>
+        </section>
+      </div>
+
+      <aside class="bot-sidebar">
+        <section class="sidebar-card">
+          <h2>Ask one situation at a time</h2>
+          <p>Include the action, feature, spell, condition, and timing that matter. The bot may ask a follow-up if the answer changes with missing details.</p>
+        </section>
+        <section class="sidebar-card">
+          <h2>Ground rules</h2>
+          <ul>
+            <li>Rules as written, not designer intent</li>
+            <li>No homebrew unless clearly identified</li>
+            <li>No invented certainty when sources conflict</li>
+          </ul>
+        </section>
+        <section class="sidebar-card">
+          <h2>Something look wrong?</h2>
+          <p>Do not use a questionable answer mid-argument. Check the cited rule and <a href="mailto:admin@krakenworks.app?subject=Rules%20Bot%20feedback">report the problem</a>.</p>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Rules Bot is a research aid, not a replacement for your table's ruling.</p>
+    <nav aria-label="Footer navigation"><a href="../">Home</a><a href="mailto:admin@krakenworks.app">Contact</a></nav>
+  </footer>
+</body>
+</html>
