@@ -1,3 +1,6 @@
+import {parseRuleEnvelope} from "./rule-envelope.mjs";
+import {renderRuleMarkdown, renderProvenanceLines, provenanceSummary} from "./rule-markdown.mjs";
+
 const form = document.querySelector("#rules-form");
 const question = document.querySelector("#question");
 const count = document.querySelector("#character-count");
@@ -5,6 +8,7 @@ const button = document.querySelector("#ask-button");
 const panel = document.querySelector("#answer-panel");
 const answerKind = document.querySelector("#answer-kind");
 const answerText = document.querySelector("#answer-text");
+const answerChoices = document.querySelector("#answer-choices");
 const citationsWrap = document.querySelector("#citations-wrap");
 const citationList = document.querySelector("#citation-list");
 const serviceStatus = document.querySelector("#service-status");
@@ -20,6 +24,14 @@ let activeResponse = null;
 let turnstileToken = "";
 let turnstileWidgetId = null;
 
+function updateChoiceButtons() {
+  const waiting = Boolean(turnstileSiteKey && !turnstileToken);
+  for (const choice of answerChoices.querySelectorAll("button")) {
+    choice.disabled = waiting;
+    choice.title = waiting ? "Complete the bot check to use this choice." : "";
+  }
+}
+
 function setStatus(message, online = false) {
   serviceStatus.replaceChildren();
   const dot = document.createElement("span");
@@ -27,10 +39,87 @@ function setStatus(message, online = false) {
   serviceStatus.append(dot, document.createTextNode(message));
 }
 
-function showAnswer(kind, text, citations = [], isError = false) {
+function buildDetails(className, summaryText, build) {
+  const details = document.createElement("details");
+  details.className = className;
+  const summary = document.createElement("summary");
+  summary.textContent = summaryText;
+  const content = document.createElement("div");
+  build(content);
+  details.append(summary, content);
+  return details;
+}
+
+function renderRuleEnvelope(envelope, rawText) {
+  answerText.replaceChildren();
+  answerText.classList.add("rule-results");
+  for (const entry of envelope.entries) {
+    const card = document.createElement("article");
+    card.className = "rule-card";
+    const title = document.createElement("h2");
+    title.textContent = entry.title;
+    const body = document.createElement("div");
+    body.className = "rule-body";
+    renderRuleMarkdown(body, entry.body);
+    const source = document.createElement("p");
+    source.className = "rule-source";
+    source.textContent = entry.source;
+    card.append(title, body, source);
+    answerText.append(card);
+  }
+
+  const footer = document.createElement("div");
+  footer.className = "rule-footer";
+  footer.append(buildDetails("rule-provenance", `Provenance · ${provenanceSummary(envelope.provenance)}`, content => {
+    renderProvenanceLines(content, envelope.provenance);
+  }));
+  // The formatted cards are a reading aid; the exact returned text stays
+  // available, complete and unmodified, for citation and verification.
+  footer.append(buildDetails("rule-raw", "Exact text as returned", content => {
+    const pre = document.createElement("pre");
+    pre.textContent = rawText;
+    content.append(pre);
+  }));
+  answerText.append(footer);
+}
+
+function renderChoices(choices = []) {
+  const validChoices = choices.filter(choice => choice && typeof choice.label === "string" && typeof choice.question === "string");
+  answerChoices.replaceChildren();
+  answerChoices.hidden = validChoices.length === 0;
+  if (!validChoices.length) return;
+  const prompt = document.createElement("p");
+  prompt.textContent = "Choose the rule you meant:";
+  answerChoices.append(prompt);
+  const buttons = document.createElement("div");
+  buttons.className = "answer-choice-list";
+  for (const choice of validChoices) {
+    const option = document.createElement("button");
+    option.className = "example-button";
+    option.type = "button";
+    option.textContent = choice.label;
+    option.addEventListener("click", () => {
+      question.value = choice.question;
+      count.textContent = String(question.value.length);
+      form.requestSubmit();
+    });
+    buttons.append(option);
+  }
+  answerChoices.append(buttons);
+  updateChoiceButtons();
+}
+
+function showAnswer(kind, text, citations = [], isError = false, choices = []) {
   answerKind.textContent = kind;
   answerKind.classList.toggle("notice-error", isError);
-  answerText.textContent = text;
+  answerText.classList.remove("rule-results");
+  const envelope = !isError ? parseRuleEnvelope(text) : null;
+  if (envelope) renderRuleEnvelope(envelope, text);
+  else {
+    answerText.replaceChildren();
+    answerText.textContent = text;
+  }
+  renderChoices(isError ? [] : choices);
   citationList.replaceChildren();
   for (const citation of citations) {
     const item = document.createElement("li");
@@ -41,7 +130,7 @@ function showAnswer(kind, text, citations = [], isError = false) {
     item.append(quote, source);
     citationList.append(item);
   }
-  citationsWrap.hidden = citations.length === 0;
+  citationsWrap.hidden = citations.length === 0 || Boolean(envelope);
   panel.hidden = false;
 }
 
@@ -70,9 +159,9 @@ if (turnstileSiteKey) {
   window.rulesBotTurnstileReady = () => {
     turnstileWidgetId = window.turnstile.render("#turnstile-widget", {
       sitekey: turnstileSiteKey,
-      callback: token => { turnstileToken = token; },
-      "expired-callback": () => { turnstileToken = ""; },
-      "error-callback": () => { turnstileToken = ""; },
+      callback: token => { turnstileToken = token; updateChoiceButtons(); },
+      "expired-callback": () => { turnstileToken = ""; updateChoiceButtons(); },
+      "error-callback": () => { turnstileToken = ""; updateChoiceButtons(); },
     });
   };
   const script = document.createElement("script");
@@ -111,8 +200,8 @@ form.addEventListener("submit", async event => {
     });
     if (!response.ok) throw new Error("request_failed");
     const result = await response.json();
-    const labels = {answer: "Answer", clarification: "One detail first", evidence: "Rules evidence", unresolved: "No reliable ruling"};
-    showAnswer(labels[result.kind] || "Rules response", result.text || "The service returned no answer.", Array.isArray(result.citations) ? result.citations : []);
+    const labels = {answer: "Answer", clarification: "Choose a rule", evidence: "Rules as written", unresolved: "No reliable rule found"};
+    showAnswer(labels[result.kind] || "Rules response", result.text || "The service returned no answer.", Array.isArray(result.citations) ? result.citations : [], false, Array.isArray(result.choices) ? result.choices : []);
     if (result.responseId) {
       activeResponse = {id: result.responseId, consented};
       feedbackWrap.hidden = false;
@@ -124,6 +213,7 @@ form.addEventListener("submit", async event => {
   } finally {
     turnstileToken = "";
     if (turnstileSiteKey && turnstileWidgetId !== null) window.turnstile?.reset(turnstileWidgetId);
+    updateChoiceButtons();
     button.disabled = false;
     button.textContent = "Ask the bot";
   }
