@@ -54,11 +54,18 @@ test("Krakenworks routes stay connected across the game surfaces", () => {
   assert.match(playHtml, /href="\.\.\/\.\.\/privacy\/"[^>]*>Privacy/);
 });
 
-test("playtest walkthrough and minimal feedback form stay visible", () => {
+test("playtest walkthrough and privacy-minimal report queue stay visible", () => {
   assert.match(playHtml, /Your first shift/);
   assert.match(playHtml, /Found a crack—or a cool idea/);
   assert.match(playHtml, /<textarea[^>]+maxlength="1200"[^>]+required/);
+  assert.match(playHtml, /id="feedback-category"[^>]+required/);
+  assert.match(playHtml, /id="feedback-severity"[^>]+required/);
+  assert.match(playHtml, /id="feedback-consent"[^>]+required/);
+  assert.match(playHtml, /name="playtest-feedback-api" content="https:\/\/dungeon\.tail804ca5\.ts\.net\/v1\/playtest-feedback"/);
+  assert.match(playHtml, /turnstileToken: feedbackTurnstileToken/);
+  assert.match(playHtml, /telemetryConsent: true/);
+  assert.match(playHtml, /await fetch\(feedbackApi/);
   assert.doesNotMatch(playHtml, /type="email"/);
   assert.doesNotMatch(playHtml, /type="text"[^>]+name="(?:name|email)"/);
-  assert.match(playHtml, /mailto:admin@krakenworks\.app/);
+  assert.doesNotMatch(playHtml, /mailto:admin@krakenworks\.app/);
 });

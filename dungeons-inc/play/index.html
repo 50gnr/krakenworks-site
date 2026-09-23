@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="description" content="Play the Dungeon Inc. Defence browser trial. No account, installation, analytics, or multiplayer.">
+  <meta name="playtest-feedback-api" content="https://dungeon.tail804ca5.ts.net/v1/playtest-feedback">
+  <meta name="playtest-turnstile-site-key" content="0x4AAAAAAFAJtiya_cczPYNt">
   <title>Play Dungeon Inc. | Krakenworks</title>
   <link rel="icon" href="TemplateData/favicon.ico">
   <link rel="stylesheet" href="../../styles.css">
@@ -77,10 +79,8 @@
       font-weight: 900;
     }
     .feedback label { display: block; margin: 1rem 0 .45rem; font-size: .78rem; font-weight: 800; }
-    .feedback textarea {
+    .feedback textarea, .feedback select {
       width: 100%;
-      min-height: 150px;
-      resize: vertical;
       padding: .75rem;
       color: var(--text);
       border: 1px solid var(--line);
@@ -90,10 +90,25 @@
       font: inherit;
       font-size: .86rem;
     }
-    .feedback textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgb(239 168 80 / 12%); }
+    .feedback textarea { min-height: 150px; resize: vertical; }
+    .feedback textarea:focus, .feedback select:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgb(239 168 80 / 12%); }
+    .feedback .consent-choice {
+      display: flex;
+      align-items: flex-start;
+      gap: .55rem;
+      color: var(--muted);
+      font-size: .72rem;
+      font-weight: 400;
+    }
+    .consent-choice input { margin-top: .2rem; }
+    .feedback-turnstile { margin-top: .8rem; overflow: hidden; }
+    .feedback-turnstile[hidden] { display: none; }
     .feedback button { width: 100%; margin-top: .65rem; color: #171006; border-color: transparent; background: var(--gold); }
     .feedback button:hover { border-color: transparent; background: #ffc875; }
+    .feedback button:disabled { opacity: .55; cursor: wait; }
     .feedback small { display: block; margin-top: .6rem; color: var(--muted); font-size: .68rem; }
+    .feedback-status { min-height: 1.4em; margin: .6rem 0 0; color: var(--mint); font-size: .72rem; }
+    .feedback-status.error { color: #ffb6ad; }
     .player {
       position: relative;
       width: min(480px, calc((100dvh - 125px) / 2), calc(100vw - 2rem));
@@ -228,10 +243,31 @@
         <h2 id="feedback-title">Found a crack—or a cool idea?</h2>
         <p>Send the rough version. “This broke” and “this would be cool” are both useful.</p>
         <form id="feedback-form">
+          <label for="feedback-category">Type</label>
+          <select id="feedback-category" required>
+            <option value="" selected disabled>Choose a report type</option>
+            <option value="bug">Bug</option>
+            <option value="balance">Balance</option>
+            <option value="usability">Usability</option>
+            <option value="idea">Idea</option>
+          </select>
+          <label for="feedback-severity">Impact</label>
+          <select id="feedback-severity" required>
+            <option value="" selected disabled>Choose the impact</option>
+            <option value="blocker">Can’t play or progress</option>
+            <option value="major">Major problem</option>
+            <option value="minor">Small problem</option>
+            <option value="suggestion">Suggestion or polish</option>
+          </select>
           <label for="feedback-note">What happened?</label>
           <textarea id="feedback-note" maxlength="1200" required placeholder="This broke when…&#10;&#10;It would be cool if…"></textarea>
-          <button type="submit">Send feedback</button>
-          <small>No name or email field. This opens your device’s mail app so you control what is sent.</small>
+          <label class="consent-choice" for="feedback-consent"><input id="feedback-consent" type="checkbox" required> Store this report and minimal technical context for playtest QA. No name or IP address is logged.</label>
+          <div class="feedback-turnstile" id="feedback-turnstile-wrap" hidden>
+            <div id="feedback-turnstile" aria-label="Anti-bot verification"></div>
+          </div>
+          <button id="feedback-submit" type="submit">Send report</button>
+          <p class="feedback-status" id="feedback-status" role="status"></p>
+          <small>Stored with build, page, platform, and viewport only. Do not include private information.</small>
         </form>
       </aside>
     </div>
@@ -247,14 +283,83 @@
     const warning = document.querySelector("#unity-warning");
     const feedbackForm = document.querySelector("#feedback-form");
     const feedbackNote = document.querySelector("#feedback-note");
+    const feedbackCategory = document.querySelector("#feedback-category");
+    const feedbackSeverity = document.querySelector("#feedback-severity");
+    const feedbackConsent = document.querySelector("#feedback-consent");
+    const feedbackSubmit = document.querySelector("#feedback-submit");
+    const feedbackStatus = document.querySelector("#feedback-status");
+    const feedbackApi = document.querySelector('meta[name="playtest-feedback-api"]')?.content.trim();
+    const feedbackTurnstileSiteKey = document.querySelector('meta[name="playtest-turnstile-site-key"]')?.content.trim();
+    const feedbackTurnstileWrap = document.querySelector("#feedback-turnstile-wrap");
+    let feedbackTurnstileToken = "";
+    let feedbackTurnstileWidgetId = null;
 
-    feedbackForm.addEventListener("submit", event => {
+    function setFeedbackStatus(message, isError = false) {
+      feedbackStatus.textContent = message;
+      feedbackStatus.classList.toggle("error", isError);
+    }
+
+    if (feedbackTurnstileSiteKey) {
+      feedbackTurnstileWrap.hidden = false;
+      window.dungeonFeedbackTurnstileReady = () => {
+        feedbackTurnstileWidgetId = window.turnstile.render("#feedback-turnstile", {
+          sitekey: feedbackTurnstileSiteKey,
+          callback: token => { feedbackTurnstileToken = token; },
+          "expired-callback": () => { feedbackTurnstileToken = ""; },
+          "error-callback": () => { feedbackTurnstileToken = ""; },
+        });
+      };
+      const turnstileScript = document.createElement("script");
+      turnstileScript.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?onload=dungeonFeedbackTurnstileReady&render=explicit";
+      turnstileScript.async = true;
+      turnstileScript.defer = true;
+      document.head.append(turnstileScript);
+    }
+
+    feedbackForm.addEventListener("submit", async event => {
       event.preventDefault();
       const note = feedbackNote.value.trim();
-      if (!note) return;
-      const subject = encodeURIComponent("Dungeon Inc browser playtest");
-      const body = encodeURIComponent(note + "\n\nBuild: Web 0.2.20");
-      window.location.href = "mailto:admin@krakenworks.app?subject=" + subject + "&body=" + body;
+      if (!note || !feedbackCategory.value || !feedbackSeverity.value || !feedbackConsent.checked) return;
+      if (!feedbackApi) {
+        setFeedbackStatus("Reporting is temporarily unavailable.", true);
+        return;
+      }
+      if (feedbackTurnstileSiteKey && !feedbackTurnstileToken) {
+        setFeedbackStatus("Complete the anti-bot check before sending.", true);
+        return;
+      }
+      feedbackSubmit.disabled = true;
+      feedbackSubmit.textContent = "Sending report…";
+      setFeedbackStatus("");
+      try {
+        const platform = String(navigator.userAgentData?.platform || navigator.platform || "Unknown").replace(/[^\w .()-]/gu, " ").replace(/\s+/g, " ").trim().slice(0, 80) || "Unknown";
+        const response = await fetch(feedbackApi, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            category: feedbackCategory.value,
+            severity: feedbackSeverity.value,
+            description: note,
+            build: "web-0.2.20",
+            page: window.location.pathname,
+            platform,
+            viewport: `${window.innerWidth}x${window.innerHeight}`,
+            telemetryConsent: true,
+            turnstileToken: feedbackTurnstileToken,
+          }),
+        });
+        if (!response.ok) throw new Error("feedback_failed");
+        const receipt = await response.json();
+        feedbackForm.reset();
+        setFeedbackStatus(`Report received · ${receipt.reportId || "queued"}`);
+      } catch {
+        setFeedbackStatus("The report could not be sent. Please try again later.", true);
+      } finally {
+        feedbackTurnstileToken = "";
+        if (feedbackTurnstileWidgetId !== null) window.turnstile?.reset(feedbackTurnstileWidgetId);
+        feedbackSubmit.disabled = false;
+        feedbackSubmit.textContent = "Send report";
+      }
     });
 
     function showBanner(message, type) {
