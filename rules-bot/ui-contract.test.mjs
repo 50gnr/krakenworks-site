@@ -5,6 +5,7 @@ import {parseRuleEnvelope} from './rule-envelope.mjs';
 
 const html = fs.readFileSync(new URL('./index.html', import.meta.url), 'utf8');
 const script = fs.readFileSync(new URL('./app.js', import.meta.url), 'utf8');
+const markdown = fs.readFileSync(new URL('./rule-markdown.mjs', import.meta.url), 'utf8');
 
 test('production uses the reviewed HTTPS API and Turnstile widget', () => {
   assert.match(html, /<meta name="rules-bot-api" content="https:\/\/dungeon\.tail804ca5\.ts\.net\/v1\/ask">/);
@@ -32,11 +33,46 @@ test('fetch flow has no automatic retry', () => {
 });
 test('complete rule envelopes render as safe cards without duplicate citation excerpts', () => {
   assert.match(script, /import \{parseRuleEnvelope\} from "\.\/rule-envelope\.mjs"/);
+  assert.match(script, /import \{renderRuleMarkdown, renderProvenanceLines, provenanceSummary\} from "\.\/rule-markdown\.mjs"/);
   assert.match(script, /document\.createElement\("article"\)/);
-  assert.match(script, /details\.className = "rule-provenance"/);
+  assert.match(script, /buildDetails\("rule-provenance", provenanceSummary\(envelope\.provenance\)/);
+  // Sources only disappear once the complete envelope parsed; otherwise they
+  // stay visible as the only evidence the reader has.
   assert.match(script, /citationsWrap\.hidden = citations\.length === 0 \|\| Boolean\(envelope\)/);
-  assert.doesNotMatch(script, /innerHTML|insertAdjacentHTML|DOMParser/);
   assert.match(html, /<div class="answer-text" id="answer-text"><\/div>/);
+});
+test('rendering never routes rule text through HTML parsing', () => {
+  for (const source of [script, markdown]) {
+    assert.doesNotMatch(source, /innerHTML|outerHTML|insertAdjacentHTML|DOMParser|document\.write/);
+  }
+  assert.match(markdown, /createTextNode/);
+});
+test('the formatted cards keep the complete verbatim response available', () => {
+  assert.match(script, /renderRuleEnvelope\(envelope, text\)/);
+  assert.match(script, /buildDetails\("rule-raw", "Exact text as returned"/);
+  assert.match(script, /pre\.textContent = rawText/);
+  // The raw block must show the response as received, never a re-serialised copy.
+  assert.doesNotMatch(script, /rawText\.(?:slice|substring|replace|trim)/);
+});
+test('clarification and error text still renders when no envelope is present', () => {
+  assert.match(script, /answerText\.textContent = text/);
+  assert.match(script, /answerKind\.classList\.toggle\("notice-error", isError\)/);
+  assert.match(script, /showAnswer\("Service unavailable"/);
+  assert.match(script, /showAnswer\("Bot check required"/);
+});
+test('anchors built from rule text are restricted to http and https', () => {
+  assert.match(markdown, /scheme === "http:" \|\| scheme === "https:"/);
+  assert.match(markdown, /link\.setAttribute\("rel", "noopener noreferrer"\)/);
+  assert.doesNotMatch(markdown, /javascript:/i);
+});
+test('structured clarification choices render as Turnstile-aware submit buttons', () => {
+  assert.match(html, /id="answer-choices"/);
+  assert.match(script, /typeof choice\.label === "string"/);
+  assert.match(script, /typeof choice\.question === "string"/);
+  assert.match(script, /question\.value = choice\.question/);
+  assert.match(script, /form\.requestSubmit\(\)/);
+  assert.match(script, /updateChoiceButtons\(\)/);
+  assert.doesNotMatch(script, /choice\.innerHTML/);
 });
 test('rule envelope parser accepts complete RAW and rejects malformed envelopes', () => {
   const complete = [
