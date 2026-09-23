@@ -35,7 +35,7 @@ test('complete rule envelopes render as safe cards without duplicate citation ex
   assert.match(script, /import \{parseRuleEnvelope\} from "\.\/rule-envelope\.mjs"/);
   assert.match(script, /import \{renderRuleMarkdown, renderProvenanceLines, provenanceSummary\} from "\.\/rule-markdown\.mjs"/);
   assert.match(script, /document\.createElement\("article"\)/);
-  assert.match(script, /buildDetails\("rule-provenance", provenanceSummary\(envelope\.provenance\)/);
+  assert.match(script, /buildDetails\("rule-provenance", `Provenance · \$\{provenanceSummary\(envelope\.provenance\)\}`/);
   // Sources only disappear once the complete envelope parsed; otherwise they
   // stay visible as the only evidence the reader has.
   assert.match(script, /citationsWrap\.hidden = citations\.length === 0 \|\| Boolean\(envelope\)/);

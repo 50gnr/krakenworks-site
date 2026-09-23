@@ -70,7 +70,7 @@ function renderRuleEnvelope(envelope, rawText) {
 
   const footer = document.createElement("div");
   footer.className = "rule-footer";
-  footer.append(buildDetails("rule-provenance", provenanceSummary(envelope.provenance), content => {
+  footer.append(buildDetails("rule-provenance", `Provenance · ${provenanceSummary(envelope.provenance)}`, content => {
     renderProvenanceLines(content, envelope.provenance);
   }));
   // The formatted cards are a reading aid; the exact returned text stays

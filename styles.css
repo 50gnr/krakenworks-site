@@ -441,6 +441,12 @@ textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgb(239 168 
   border-radius: 10px;
   font-size: .78rem;
 }
+.rule-provenance {
+  padding: .45rem .7rem;
+  background: rgb(7 16 14 / 38%);
+  font-size: .7rem;
+  line-height: 1.45;
+}
 .rule-provenance summary, .rule-raw summary {
   color: var(--muted);
   font-weight: 700;
@@ -448,10 +454,21 @@ textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgb(239 168 
   cursor: pointer;
   overflow-wrap: anywhere;
 }
+.rule-provenance summary {
+  color: #87a096;
+  font-size: .7rem;
+  font-weight: 650;
+  letter-spacing: .015em;
+}
 .rule-provenance summary:hover, .rule-raw summary:hover { color: var(--text); }
 .rule-provenance > div, .rule-raw > div { margin-top: .65rem; overflow-wrap: anywhere; }
+.rule-provenance > div {
+  margin-top: .45rem;
+  padding-top: .45rem;
+  border-top: 1px solid rgb(41 71 60 / 65%);
+}
 .provenance-list { display: grid; grid-template-columns: max-content 1fr; gap: .3rem .75rem; margin: 0; }
-.provenance-list dt { color: var(--text); font-weight: 750; }
+.provenance-list dt { color: var(--green); font-weight: 750; }
 .provenance-list dd { margin: 0; }
 .provenance-list a { color: var(--green); overflow-wrap: anywhere; }
 .rule-raw pre {
