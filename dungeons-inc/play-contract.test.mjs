@@ -5,6 +5,7 @@ import test from "node:test";
 const playRoot = new URL("./play/", import.meta.url);
 const playHtml = await readFile(new URL("index.html", playRoot), "utf8");
 const landingHtml = await readFile(new URL("./index.html", import.meta.url), "utf8");
+const homeHtml = await readFile(new URL("../index.html", import.meta.url), "utf8");
 
 const requiredAssets = [
   "Build/WebGL.data",
@@ -42,6 +43,15 @@ test("Dungeon Inc landing page links to browser play", () => {
   assert.match(landingHtml, /href="play\/"[^>]*>Play in your browser</);
   assert.match(landingHtml, /Browser trial v0\.2\.20/);
   assert.match(landingHtml, /Clearing site data removes that browser save/);
+});
+
+test("Krakenworks routes stay connected across the game surfaces", () => {
+  assert.match(homeHtml, /href="downloads\/DungeonInc-Defence-0\.2\.19\.apk"[^>]*download[^>]*>Download the APK/);
+  assert.match(homeHtml, /href="dungeons-inc\/play\/"[^>]*>Play live in your browser/);
+  assert.match(landingHtml, /href="\.\.\/rules-bot\/"[^>]*>Rules Bot/);
+  assert.match(playHtml, /class="site-header play-site-header"/);
+  assert.match(playHtml, /href="\.\.\/\.\.\/rules-bot\/"[^>]*>Rules Bot/);
+  assert.match(playHtml, /href="\.\.\/\.\.\/privacy\/"[^>]*>Privacy/);
 });
 
 test("playtest walkthrough and minimal feedback form stay visible", () => {

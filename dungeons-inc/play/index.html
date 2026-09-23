@@ -6,6 +6,7 @@
   <meta name="description" content="Play the Dungeon Inc. Defence browser trial. No account, installation, analytics, or multiplayer.">
   <title>Play Dungeon Inc. | Krakenworks</title>
   <link rel="icon" href="TemplateData/favicon.ico">
+  <link rel="stylesheet" href="../../styles.css">
   <style>
     :root {
       color-scheme: dark;
@@ -28,19 +29,7 @@
       font: 15px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
     a { color: var(--text); }
-    .topbar {
-      width: min(1180px, calc(100% - 2rem));
-      min-height: 64px;
-      margin-inline: auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-    }
-    .back { color: var(--muted); font-weight: 750; text-decoration: none; }
-    .back:hover { color: var(--text); }
-    .local-note { margin: 0; color: var(--muted); font-size: .78rem; text-align: right; }
-    main { padding: 0 1rem 1.5rem; }
+    main.play-main { width: 100%; max-width: none; padding: 0 1rem 1.5rem; }
     .play-layout {
       width: min(1180px, 100%);
       margin-inline: auto;
@@ -172,15 +161,20 @@
       .side-card { margin-top: 1rem; }
     }
     @media (max-width: 600px) {
-      .topbar { display: none; }
-      main { padding: 0; }
+      main.play-main { padding: 0; }
       .play-layout {
         display: grid;
         grid-template-columns: 1fr;
         grid-template-areas: "game" "guide" "feedback";
         gap: 0;
       }
-      .player { width: min(100vw, 50dvh); max-width: none; height: min(100dvh, 200vw); border: 0; border-radius: 0; }
+      .player {
+        width: min(100vw, calc((100dvh - 142px) / 2));
+        max-width: none;
+        height: auto;
+        min-width: 280px;
+        border-radius: 0 0 12px 12px;
+      }
       .side-card { margin: 1rem; }
       .feedback { margin-top: 0; margin-bottom: 4rem; }
       .controls { position: fixed; z-index: 4; right: .5rem; bottom: .5rem; width: auto; }
@@ -190,11 +184,15 @@
   </style>
 </head>
 <body>
-  <header class="topbar">
-    <a class="back" href="../">← Dungeon Inc.</a>
-    <p class="local-note">Your progress stays in this browser. No account or analytics.</p>
+  <header class="site-header play-site-header">
+    <a class="brand" href="../../" aria-label="Krakenworks home"><span class="brand-mark" aria-hidden="true">K</span><span>Krakenworks</span></a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="../" aria-current="page">Dungeon Inc.</a>
+      <a href="../../rules-bot/">Rules Bot</a>
+      <a href="../../privacy/">Privacy</a>
+    </nav>
   </header>
-  <main>
+  <main class="play-main">
     <div class="play-layout">
       <aside class="side-card guide" aria-labelledby="guide-title">
         <p class="kicker">Work in progress</p>
@@ -220,7 +218,7 @@
           <div class="warning" id="unity-warning" aria-live="polite"></div>
         </div>
         <div class="controls">
-          <span>Dungeon Inc. Defence 0.2.20 · solo browser trial</span>
+          <span>Dungeon Inc. Defence 0.2.20 · solo browser trial · No account or analytics</span>
           <button id="fullscreen" type="button" disabled>Fullscreen</button>
         </div>
       </div>

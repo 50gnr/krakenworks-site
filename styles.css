@@ -182,6 +182,12 @@ p { margin: .8rem 0; }
   text-transform: uppercase;
 }
 .text-link { font-weight: 800; }
+.project-links {
+  display: grid;
+  justify-items: start;
+  gap: .45rem;
+  margin-top: 1rem;
+}
 .pixel-door {
   position: absolute;
   bottom: 0;
