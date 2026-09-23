@@ -299,6 +299,21 @@
       feedbackStatus.classList.toggle("error", isError);
     }
 
+    // Unity WebGL listens for keyboard events above the form. Stop report
+    // keystrokes at the form boundary so the browser can perform its normal
+    // text-entry action without the game swallowing the same event.
+    function preserveFeedbackKeyboardInput(event) {
+      const target = event.target;
+      if (target instanceof HTMLElement && feedbackForm.contains(target) &&
+          (target.matches("textarea, input, select") || target.isContentEditable)) {
+        event.stopPropagation();
+      }
+    }
+    for (const eventName of ["keydown", "keypress", "keyup"]) {
+      feedbackForm.addEventListener(eventName, preserveFeedbackKeyboardInput);
+    }
+    feedbackForm.addEventListener("focusin", () => canvas.blur());
+
     if (feedbackTurnstileSiteKey) {
       feedbackTurnstileWrap.hidden = false;
       window.dungeonFeedbackTurnstileReady = () => {

@@ -69,3 +69,13 @@ test("playtest walkthrough and privacy-minimal report queue stay visible", () =>
   assert.doesNotMatch(playHtml, /type="text"[^>]+name="(?:name|email)"/);
   assert.doesNotMatch(playHtml, /mailto:admin@krakenworks\.app/);
 });
+
+test("feedback controls keep keyboard input away from Unity's global handlers", () => {
+  assert.match(playHtml, /function preserveFeedbackKeyboardInput\(event\)/);
+  assert.match(playHtml, /feedbackForm\.contains\(target\)/);
+  assert.match(playHtml, /target\.matches\("textarea, input, select"\)/);
+  assert.match(playHtml, /event\.stopPropagation\(\)/);
+  assert.match(playHtml, /\["keydown", "keypress", "keyup"\]/);
+  assert.match(playHtml, /feedbackForm\.addEventListener\(eventName, preserveFeedbackKeyboardInput\)/);
+  assert.match(playHtml, /feedbackForm\.addEventListener\("focusin", \(\) => canvas\.blur\(\)\)/);
+});
