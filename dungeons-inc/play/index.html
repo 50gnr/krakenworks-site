@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Play the Dungeon Inc. Defence browser trial. No account, installation, analytics, or multiplayer.">
+  <title>Play Dungeon Inc. | Krakenworks</title>
+  <link rel="icon" href="TemplateData/favicon.ico">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07100e;
+      --panel: #10231e;
+      --line: #29473c;
+      --text: #eef6f1;
+      --muted: #9fb5ac;
+      --gold: #efa850;
+      --mint: #75caa3;
+    }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 20% -10%, rgb(43 105 83 / 38%), transparent 32rem),
+        var(--bg);
+      color: var(--text);
+      font: 15px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    a { color: var(--text); }
+    .topbar {
+      width: min(1180px, calc(100% - 2rem));
+      min-height: 64px;
+      margin-inline: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .back { color: var(--muted); font-weight: 750; text-decoration: none; }
+    .back:hover { color: var(--text); }
+    .local-note { margin: 0; color: var(--muted); font-size: .78rem; text-align: right; }
+    main { padding: 0 1rem 1.5rem; }
+    .play-layout {
+      width: min(1180px, 100%);
+      margin-inline: auto;
+      display: grid;
+      grid-template-columns: minmax(190px, 1fr) auto minmax(190px, 1fr);
+      grid-template-areas: "guide game feedback";
+      align-items: start;
+      gap: clamp(1rem, 2.5vw, 2rem);
+    }
+    .game-column { grid-area: game; display: grid; justify-items: center; }
+    .side-card {
+      padding: 1.15rem;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgb(16 35 30 / 82%);
+      box-shadow: 0 18px 50px rgb(0 0 0 / 25%);
+    }
+    .guide { grid-area: guide; }
+    .feedback { grid-area: feedback; }
+    .side-card h1, .side-card h2 { margin: 0; font: 800 1.2rem/1.15 Georgia, serif; }
+    .side-card .kicker {
+      margin: 0 0 .45rem;
+      color: var(--gold);
+      font-size: .68rem;
+      font-weight: 850;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    .side-card p, .side-card li { color: var(--muted); font-size: .86rem; }
+    .steps { display: grid; gap: .8rem; margin: 1rem 0 0; padding: 0; list-style: none; counter-reset: steps; }
+    .steps li { position: relative; padding-left: 2rem; counter-increment: steps; }
+    .steps li::before {
+      content: counter(steps);
+      position: absolute;
+      left: 0;
+      top: -.05rem;
+      display: grid;
+      place-items: center;
+      width: 1.35rem;
+      height: 1.35rem;
+      border-radius: 50%;
+      color: var(--bg);
+      background: var(--gold);
+      font-size: .7rem;
+      font-weight: 900;
+    }
+    .feedback label { display: block; margin: 1rem 0 .45rem; font-size: .78rem; font-weight: 800; }
+    .feedback textarea {
+      width: 100%;
+      min-height: 150px;
+      resize: vertical;
+      padding: .75rem;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      outline: none;
+      background: #081411;
+      font: inherit;
+      font-size: .86rem;
+    }
+    .feedback textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgb(239 168 80 / 12%); }
+    .feedback button { width: 100%; margin-top: .65rem; color: #171006; border-color: transparent; background: var(--gold); }
+    .feedback button:hover { border-color: transparent; background: #ffc875; }
+    .feedback small { display: block; margin-top: .6rem; color: var(--muted); font-size: .68rem; }
+    .player {
+      position: relative;
+      width: min(480px, calc((100dvh - 125px) / 2), calc(100vw - 2rem));
+      aspect-ratio: 1 / 2;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #101923;
+      box-shadow: 0 24px 80px rgb(0 0 0 / 48%);
+    }
+    #unity-canvas { display: block; width: 100%; height: 100%; background: #101923; }
+    .loading {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-content: center;
+      gap: 1rem;
+      padding: 2rem;
+      background: #101923;
+      text-align: center;
+    }
+    .loading[hidden] { display: none; }
+    .loading strong { color: var(--gold); font: 800 1.5rem Georgia, serif; }
+    .track { width: min(260px, 70vw); height: 8px; overflow: hidden; border-radius: 99px; background: #29473c; }
+    .progress { width: 0; height: 100%; background: var(--mint); transition: width .15s linear; }
+    .warning {
+      position: absolute;
+      z-index: 3;
+      inset: auto .75rem .75rem;
+      display: grid;
+      gap: .4rem;
+      pointer-events: none;
+    }
+    .warning:empty { display: none; }
+    .warning p { margin: 0; padding: .6rem .75rem; border-radius: 8px; color: #171006; background: var(--gold); font-weight: 750; }
+    .warning p.error { color: white; background: #a33d35; }
+    .controls {
+      width: min(480px, calc(100vw - 2rem));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: .75rem;
+      color: var(--muted);
+      font-size: .78rem;
+    }
+    button {
+      padding: .55rem .8rem;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    button:hover { border-color: var(--mint); }
+    @media (max-width: 900px) {
+      .play-layout {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-areas:
+          "game game"
+          "guide feedback";
+      }
+      .side-card { margin-top: 1rem; }
+    }
+    @media (max-width: 600px) {
+      .topbar { display: none; }
+      main { padding: 0; }
+      .play-layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-areas: "game" "guide" "feedback";
+        gap: 0;
+      }
+      .player { width: min(100vw, 50dvh); max-width: none; height: min(100dvh, 200vw); border: 0; border-radius: 0; }
+      .side-card { margin: 1rem; }
+      .feedback { margin-top: 0; margin-bottom: 4rem; }
+      .controls { position: fixed; z-index: 4; right: .5rem; bottom: .5rem; width: auto; }
+      .controls span { display: none; }
+      .controls button { padding: .45rem .65rem; opacity: .76; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="back" href="../">← Dungeon Inc.</a>
+    <p class="local-note">Your progress stays in this browser. No account or analytics.</p>
+  </header>
+  <main>
+    <div class="play-layout">
+      <aside class="side-card guide" aria-labelledby="guide-title">
+        <p class="kicker">Work in progress</p>
+        <h1 id="guide-title">Your first shift</h1>
+        <ol class="steps">
+          <li><strong>Start a tier.</strong> Your dungeon runs automatically while you inspect the floors.</li>
+          <li><strong>Watch the route.</strong> Adventurers cross the entrance, three rooms, then your boss.</li>
+          <li><strong>Spend run gold.</strong> Improve the rooms that are letting heroes through.</li>
+          <li><strong>Keep the essence.</strong> Permanent upgrades survive when a run ends. Repeat with fewer terrible decisions.</li>
+        </ol>
+      </aside>
+
+      <div class="game-column">
+        <div class="player" id="game-frame">
+          <canvas id="unity-canvas" width="480" height="960" tabindex="-1" aria-label="Dungeon Inc. Defence game"></canvas>
+          <div class="loading" id="loading">
+            <strong>Opening the dungeon…</strong>
+            <div class="track" role="progressbar" aria-label="Game loading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <div class="progress" id="progress"></div>
+            </div>
+            <span id="loading-label">Loading 0%</span>
+          </div>
+          <div class="warning" id="unity-warning" aria-live="polite"></div>
+        </div>
+        <div class="controls">
+          <span>Dungeon Inc. Defence 0.2.20 · solo browser trial</span>
+          <button id="fullscreen" type="button" disabled>Fullscreen</button>
+        </div>
+      </div>
+
+      <aside class="side-card feedback" aria-labelledby="feedback-title">
+        <p class="kicker">Playtest notes</p>
+        <h2 id="feedback-title">Found a crack—or a cool idea?</h2>
+        <p>Send the rough version. “This broke” and “this would be cool” are both useful.</p>
+        <form id="feedback-form">
+          <label for="feedback-note">What happened?</label>
+          <textarea id="feedback-note" maxlength="1200" required placeholder="This broke when…&#10;&#10;It would be cool if…"></textarea>
+          <button type="submit">Send feedback</button>
+          <small>No name or email field. This opens your device’s mail app so you control what is sent.</small>
+        </form>
+      </aside>
+    </div>
+  </main>
+  <script>
+    const canvas = document.querySelector("#unity-canvas");
+    const frame = document.querySelector("#game-frame");
+    const loading = document.querySelector("#loading");
+    const progress = document.querySelector("#progress");
+    const progressTrack = document.querySelector('[role="progressbar"]');
+    const loadingLabel = document.querySelector("#loading-label");
+    const fullscreen = document.querySelector("#fullscreen");
+    const warning = document.querySelector("#unity-warning");
+    const feedbackForm = document.querySelector("#feedback-form");
+    const feedbackNote = document.querySelector("#feedback-note");
+
+    feedbackForm.addEventListener("submit", event => {
+      event.preventDefault();
+      const note = feedbackNote.value.trim();
+      if (!note) return;
+      const subject = encodeURIComponent("Dungeon Inc browser playtest");
+      const body = encodeURIComponent(note + "\n\nBuild: Web 0.2.20");
+      window.location.href = "mailto:admin@krakenworks.app?subject=" + subject + "&body=" + body;
+    });
+
+    function showBanner(message, type) {
+      const notice = document.createElement("p");
+      notice.textContent = String(message);
+      if (type === "error") notice.className = "error";
+      warning.appendChild(notice);
+      if (type !== "error") setTimeout(() => notice.remove(), 5000);
+    }
+
+    const buildUrl = "Build";
+    const config = {
+      arguments: [],
+      dataUrl: buildUrl + "/WebGL.data",
+      frameworkUrl: buildUrl + "/WebGL.framework.js",
+      codeUrl: buildUrl + "/WebGL.wasm",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "Krakenworks",
+      productName: "Dungeon Inc Defence",
+      productVersion: "0.2.20",
+      autoSyncPersistentDataPath: true,
+      matchWebGLToCanvasSize: true,
+      showBanner
+    };
+
+    const loader = document.createElement("script");
+    loader.src = buildUrl + "/WebGL.loader.js";
+    loader.onload = () => {
+      createUnityInstance(canvas, config, value => {
+        const percent = Math.round(value * 100);
+        progress.style.width = percent + "%";
+        progressTrack.setAttribute("aria-valuenow", String(percent));
+        loadingLabel.textContent = "Loading " + percent + "%";
+      }).then(instance => {
+        loading.hidden = true;
+        fullscreen.disabled = false;
+        fullscreen.addEventListener("click", () => instance.SetFullscreen(1));
+        canvas.focus();
+      }).catch(error => {
+        showBanner(error, "error");
+        loadingLabel.textContent = "The dungeon failed to open.";
+      });
+    };
+    loader.onerror = () => {
+      showBanner("The game loader could not be downloaded. Refresh and try again.", "error");
+      loadingLabel.textContent = "The dungeon failed to open.";
+    };
+    document.body.appendChild(loader);
+  </script>
+</body>
+</html>
