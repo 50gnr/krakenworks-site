@@ -299,21 +299,6 @@
       feedbackStatus.classList.toggle("error", isError);
     }
 
-    // Unity WebGL listens for keyboard events above the form. Stop report
-    // keystrokes at the form boundary so the browser can perform its normal
-    // text-entry action without the game swallowing the same event.
-    function preserveFeedbackKeyboardInput(event) {
-      const target = event.target;
-      if (target instanceof HTMLElement && feedbackForm.contains(target) &&
-          (target.matches("textarea, input, select") || target.isContentEditable)) {
-        event.stopPropagation();
-      }
-    }
-    for (const eventName of ["keydown", "keypress", "keyup"]) {
-      feedbackForm.addEventListener(eventName, preserveFeedbackKeyboardInput);
-    }
-    feedbackForm.addEventListener("focusin", () => canvas.blur());
-
     if (feedbackTurnstileSiteKey) {
       feedbackTurnstileWrap.hidden = false;
       window.dungeonFeedbackTurnstileReady = () => {
@@ -386,11 +371,13 @@
     }
 
     const buildUrl = "Build";
+    const buildRevision = "web-0.2.20-keyboard-1";
+    const buildAsset = name => `${buildUrl}/${name}?rev=${buildRevision}`;
     const config = {
       arguments: [],
-      dataUrl: buildUrl + "/WebGL.data",
-      frameworkUrl: buildUrl + "/WebGL.framework.js",
-      codeUrl: buildUrl + "/WebGL.wasm",
+      dataUrl: buildAsset("WebGL.data"),
+      frameworkUrl: buildAsset("WebGL.framework.js"),
+      codeUrl: buildAsset("WebGL.wasm"),
       streamingAssetsUrl: "StreamingAssets",
       companyName: "Krakenworks",
       productName: "Dungeon Inc Defence",
@@ -401,7 +388,7 @@
     };
 
     const loader = document.createElement("script");
-    loader.src = buildUrl + "/WebGL.loader.js";
+    loader.src = buildAsset("WebGL.loader.js");
     loader.onload = () => {
       createUnityInstance(canvas, config, value => {
         const percent = Math.round(value * 100);

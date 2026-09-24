@@ -32,6 +32,11 @@ test("player is portrait-first and persists saves locally", () => {
   assert.match(playHtml, /aspect-ratio:\s*1\s*\/\s*2/);
   assert.match(playHtml, /autoSyncPersistentDataPath:\s*true/);
   assert.match(playHtml, /No account or analytics/);
+  assert.match(playHtml, /const buildRevision = "web-0\.2\.20-keyboard-1"/);
+  assert.match(playHtml, /dataUrl: buildAsset\("WebGL\.data"\)/);
+  assert.match(playHtml, /frameworkUrl: buildAsset\("WebGL\.framework\.js"\)/);
+  assert.match(playHtml, /codeUrl: buildAsset\("WebGL\.wasm"\)/);
+  assert.match(playHtml, /loader\.src = buildAsset\("WebGL\.loader\.js"\)/);
 });
 
 test("runtime messages use text nodes rather than HTML injection", () => {
@@ -70,12 +75,3 @@ test("playtest walkthrough and privacy-minimal report queue stay visible", () =>
   assert.doesNotMatch(playHtml, /mailto:admin@krakenworks\.app/);
 });
 
-test("feedback controls keep keyboard input away from Unity's global handlers", () => {
-  assert.match(playHtml, /function preserveFeedbackKeyboardInput\(event\)/);
-  assert.match(playHtml, /feedbackForm\.contains\(target\)/);
-  assert.match(playHtml, /target\.matches\("textarea, input, select"\)/);
-  assert.match(playHtml, /event\.stopPropagation\(\)/);
-  assert.match(playHtml, /\["keydown", "keypress", "keyup"\]/);
-  assert.match(playHtml, /feedbackForm\.addEventListener\(eventName, preserveFeedbackKeyboardInput\)/);
-  assert.match(playHtml, /feedbackForm\.addEventListener\("focusin", \(\) => canvas\.blur\(\)\)/);
-});
